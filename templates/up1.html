@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="lyear-layout-content">
+
+  <!-- 样式：将 file input 透明覆盖整个 drop 区域 -->
+  <style>
+    #dropZone {
+      position: relative;
+    }
+    #fileInput {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+  </style>
+
+  <div class="container">
+    <div class="row">
+      <div class="box col-xs-10 mx-auto">
+        <h3 class="text-center mb-4">实体关系抽取</h3>
+        <form enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div id="dropZone" class="border border-dashed border-primary rounded-2xl p-4 text-center mb-4 bg-light" style="cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#0d6efd" class="mb-2" viewBox="0 0 16 16">
+              <path d="M.5 9.9l2.592 3.11a1 1 0 0 0 .768.29h8.28a1 1 0 0 0 .768-.29L15.5 9.9V14a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V9.9z"/>
+              <path d="M7.646 1.146a.5.5 0 0 1 .708 0L11 3.793V8.5a.5.5 0 0 1-1 0V4.707L8 2.707 5 4.707V8.5a.5.5 0 0 1-1 0V3.793l2.646-2.647z"/>
+            </svg>
+            <p class="mb-1">将 PDF 文件拖拽到此处，或点击按钮选择</p>
+            <button type="button" class="btn btn-outline-primary mb-2">选择文件</button>
+            <!-- 透明覆盖，自动响应点击 -->
+            <input type="file" id="fileInput" name="file" accept="application/pdf" onchange="handleFileSelect()">
+            <p id="fileName" class="mt-3 text-muted small">仅支持 PDF 格式</p>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100">上传文件</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="successModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4">
+          <h4>✅ 上传成功！</h4>
+          <p>实体关系抽取成功</p>
+          <button class="btn btn-primary" data-dismiss="modal">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="{% static 'jquery-1.10.2.min.js' %}"></script>
+<script>
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  // 拖拽高亮
+  ['dragover', 'dragenter'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.classList.add('bg-white', 'border-primary');
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.classList.remove('bg-white');
+    });
+  });
+
+  // 处理拖拽放置
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (validatePDF(file)) {
+      fileInput.files = e.dataTransfer.files;
+      displayFileName(file);
+    } else {
+      alert('请上传 PDF 格式的文件');
+    }
+  });
+
+  // 文件选择后校验与显示
+  function handleFileSelect() {
+    const file = fileInput.files[0];
+    if (validatePDF(file)) {
+      displayFileName(file);
+    } else {
+      alert('仅可上传 PDF 文件');
+      fileInput.value = '';
+      displayFileName();
+    }
+  }
+
+  function validatePDF(file) {
+    return file && file.type === 'application/pdf';
+  }
+
+  function displayFileName(file = null) {
+    const name = file ? file.name : '';
+    document.getElementById('fileName').textContent = name || '仅支持 PDF 格式';
+  }
+
+  // 提交表单
+  $('form').submit(function(e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    $.ajax({
+      url: '/upload',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        if (response.status === 'success') {
+          $('#successModal').modal('show');
+          fileInput.value = '';
+          displayFileName();
+        } else {
+          alert('错误: ' + response.message);
+        }
+      },
+      error: function(xhr) {
+        alert('上传失败: ' + xhr.responseText);
+      }
+    });
+  });
+</script>
+
+{% endblock %}
