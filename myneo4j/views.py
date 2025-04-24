@@ -3,6 +3,7 @@ import os
 import time
 import json
 from openai import OpenAI
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect,get_object_or_404
 from .pyneo_utils import *
@@ -17,7 +18,10 @@ import PyPDF2
 import pdfplumber
 from io import BytesIO
 from .models import MyNode, MyWenda,Question
-
+import os
+from django.conf import settings
+import uuid
+progress_state = {}
 # 初始化 API 客户端
 client = OpenAI(
     api_key="sk-7ca946c7053e4a5a8d3849f7659bc80a",
@@ -230,36 +234,94 @@ def rec(request):
 # @login_required
 # def wenda_html(request):
 #     return render(request, "chat.html", locals())
+@login_required
+def get_progress(request):
+    user_id = str(request.user.id)
+    current_state = progress_state.get(user_id, "⌛ 等待开始...")
+    return JsonResponse({'state': current_state})
+
+def extract_and_upload(user_id, content, filename):
+    try:
+        progress_state[user_id] = "✂️ 正在抽取三元组"
+        df = get_triples(client, content, filename)
+
+        if df is None:
+            progress_state[user_id] = "❌ 抽取失败：未返回三元组"
+            return
+
+        progress_state[user_id] = "🧠 正在写入图谱"
+        service_upload(df, client)
+
+        progress_state[user_id] = "✅ 抽取流程完成"
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        progress_state[user_id] = f"❌ 抽取失败：{str(e)}"
+
 @csrf_exempt
 @login_required
 def upload_html(request):
+    user_id = str(request.user.id)
+
     if request.method == 'POST':
-        # 获取上传文件
-        uploaded_file = request.FILES.get('file')
-
-        if not uploaded_file:
-            return JsonResponse({'status': 'error', 'message': '未选择文件'})
-
-        # 文件类型验证
-        if not (uploaded_file.content_type == 'application/pdf' and
-                uploaded_file.name.lower().endswith('.pdf')):
-            return JsonResponse({'status': 'error', 'message': '仅支持PDF格式'})
         try:
-        # if True:
-            # ========== 内存中处理文件 ==========
-            file_content = uploaded_file.read()
-            with pdfplumber.open(BytesIO(file_content)) as pdf:
-                text_content = "\n".join(page.extract_text() for page in pdf.pages)
-            df=get_triples(client, text_content, uploaded_file.name)
-            if df is None:
-                return JsonResponse({'status': 'success', 'message': '数据错误！'})
-            else:
-                service_upload(df,client)
-            return JsonResponse({'status': 'success', 'message': '实体关系抽取成功！'})
+            uploaded_file = request.FILES.get('file')
+            if not uploaded_file:
+                progress_state[user_id] = "❌ 上传失败：未选择文件"
+                return JsonResponse({'status': 'error', 'message': '未选择文件'})
+
+            # ✅ 生成唯一临时文件名，保存上传文件
+            filename = f"{uuid.uuid4()}.pdf"
+            upload_path = os.path.join(settings.BASE_DIR, 'uploads')  # 你可以改为 MEDIA_ROOT
+            os.makedirs(upload_path, exist_ok=True)
+            file_path = os.path.join(upload_path, filename)
+
+            with open(file_path, 'wb+') as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+
+            progress_state[user_id] = "📄 上传成功"
+
+            # ✅ 异步后台处理这个保存的 PDF 文件
+            from threading import Thread
+            Thread(target=extract_and_upload_from_file, args=(user_id, file_path, uploaded_file.name)).start()
+
+            return JsonResponse({'status': 'success', 'message': '正在后台抽取中...'})
+
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'实体关系抽取失败: {str(e)}'})
+            progress_state[user_id] = "❌ 抽取失败"
+            return JsonResponse({'status': 'error', 'message': str(e)})
 
     return render(request, "up1.html", locals())
+
+
+def extract_and_upload_from_file(user_id, file_path, original_name):
+    try:
+        progress_state[user_id] = "✂️ 正在抽取三元组"
+
+        with pdfplumber.open(file_path) as pdf:
+            text_content = "\n".join(
+                page.extract_text() if isinstance(page.extract_text(), str) else ""
+                for page in pdf.pages
+            )
+
+        df = get_triples(client, text_content, original_name)
+
+        if df is None:
+            progress_state[user_id] = "❌ 抽取失败：未返回三元组"
+            return
+
+        progress_state[user_id] = "🧠 正在写入图谱"
+        service_upload(df, client)
+
+        progress_state[user_id] = "✅ 抽取流程完成"
+
+    except Exception as e:
+        progress_state[user_id] = f"❌ 抽取失败：{str(e)}"
+    finally:
+        os.remove(file_path)  # ✅ 清除临时文件
+
 
 
 

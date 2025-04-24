@@ -1,142 +1,158 @@
- {% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
-    <main class="lyear-layout-content">
+<style>
 
-        <div class="container-fluid">
-            <div class="row">
+  body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: url("{% static 'images/main-bg.jpg' %}") no-repeat center center fixed;
+    background-size: cover;
+  }
 
-                <div class="col-md-12">
-                        <div>
-                    <div class="card">
-                        <div class="card-header"><h4 ><a href="http://localhost:7474/browser/"  target="_blank">查看图谱数据库</a></h4></div>
-                        <div class="card-body">
-                            <div>
-                            <form action="/" id="rec" method="get">
+  .lyear-layout-content {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.4));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 2rem;
+  }
 
-                                <form action="/" method="get" id = 'searchEntityForm'>
-                                {% csrf_token %}
-                                <div class="input-group">
+  .card {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
 
-                                    <input type="text" id = "key" value="{{ inputs }}" name = "key" class="form-control" placeholder="节点名称" aria-describedby="basic-addon1">
-                                    <span class="btn btn-primary input-group-addon" type="button" id="relationSearchButton" style="background-color:#4592fe ; padding:6px 38px" onclick="document.forms[0].action='/';document.forms[0].submit();">查询</span>
-                                    <span  class="btn btn-primary input-group-addon" type="button" id="relationSearchButton" style="background-color:#2ecc71 ; padding:6px 38px" onclick="document.forms[0].action='/rec';document.forms[0].submit();">在线推荐</span>
+  .form-control {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 15px;
+    color: #2e7d32;
+  }
 
-                                </div>
+  .form-control::placeholder {
+    color: #6b8c6a;
+    font-style: italic;
+  }
 
-                            </form>
+  .btn-primary {
+    background-color: #43a047;
+    border-color: #43a047;
+    border-radius: 10px;
+    font-size: 16px;
+    padding: 10px 28px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 128, 0, 0.2);
+    transition: all 0.3s ease;
+  }
 
-                            </form>
+  .btn-primary:hover {
+    background-color: #2e7d32;
+    box-shadow: 0 6px 14px rgba(0, 128, 0, 0.35);
+  }
+</style>
 
-                        </div>
-{#                        <div class="card-body">#}
-                            <div class="top_card">
-                            {% if ss %}
-                                <h3 style="color: blue">{{ ss | safe }}</h3>
-                                {#                                    <p>注意：绿色为识别的到的节点和关系，红色为neo4j查询的最后结果！</p>#}
-                            {% endif %}
-                    </div>
-
-
-                </div>
-
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-
-                            <div id="main" style="width: 100%;height: 640px"></div>
-
-                        </div>
-                    </div>
-
-
-                </div>
-            </div>
-
-
+<main class="lyear-layout-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h4>
+              <a href="http://localhost:7474/browser/" target="_blank">查看图谱数据库</a>
+            </h4>
+          </div>
+          <div class="card-body">
+            <form action="/" method="get">
+              {% csrf_token %}
+              <div class="input-group">
+                <input type="text" id="key" value="{{ inputs }}" name="key" class="form-control" placeholder="请输入节点名称">
+                <span class="btn btn-primary input-group-addon" type="button" onclick="this.form.action='/';this.form.submit();">查询</span>
+                <span class="btn btn-primary input-group-addon" type="button" onclick="this.form.action='/rec';this.form.submit();">在线推荐</span>
+              </div>
+            </form>
+            {% if ss %}
+              <div class="mt-3">
+                <h5 class="text-success">{{ ss|safe }}</h5>
+              </div>
+            {% endif %}
+          </div>
         </div>
 
-    </main>
-    <script src="/static/jquery-1.10.2.min.js"></script>
-    <script src="/static/echarts.min.js"></script>
-    <script type="text/javascript">
-        var myChart = echarts.init(document.getElementById('main'));
-        option1 = {
-            // backgroundColor: "white",
-            title: {
-                text: '',
-                textStyle: {
-                    // color: "white",
-                    fontWeight: "lighter",
-                }
-            },
-            animationDurationUpdate: 1500,
-            animationEasingUpdate: 'quinticInOut',
-            legend: {
-                x: "center",
-                show: true,
-                data: {{ legend_data | safe }}
-            },
-            series: [
-                {
-                    type: 'graph',
-                    layout: 'force',
-                    symbolSize: 50,
-                    edgeSymbol: ['circle', 'arrow'],
-                    edgeSymbolSize: [4, 4],
-                    edgeLabel: {
-                        normal: {
-                            show: true,
-                            formatter: function (x) {
-                                return x.data.name;
-                            },
-                            textStyle: {
-                                fontSize: 10
-                            },
-                        }
-                    },
-                    force: {
-                        repulsion: 2500,
-                        edgeLength: [10, 100]
-                    },
-                    focusNodeAdjacency: true,
-                    draggable: true,
-                    roam: true,
-                    categories: {{ categories | safe }},
-                    label: {
-                        normal: {
-                            show: true,
-                            textStyle: {
-                                fontSize: 10
-                            },
-                        }
-                    },
-                    force: {
-                        repulsion: 1000
-                    },
-                    tooltip: {
-                        formatter: function (node) { // 区分连线和节点，节点上额外显示其他数字
-                            if (!node.value) {
-                                return node.data.name;
-                            } else {
-                                return node.data.name + ":" + node.data.showNum;
-                            }
-                        },
-                    },
-                    lineStyle: {
-                        normal: {
-                            opacity: 0.9,
-                            width: 1,
-                            curveness: 0.3
-                        }
-                    },
-                    // progressiveThreshold: 700,
-                    nodes: {{ datas | safe }},
-                    links: {{ links | safe }},
+        <div class="card">
+          <div class="card-body">
+            <div id="main" style="width: 100%; height: 640px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
 
-                }
-            ]
-        };
-        myChart.setOption(option1);
-    </script>
+<script src="{% static 'jquery-1.10.2.min.js' %}"></script>
+<script src="{% static 'echarts.min.js' %}"></script>
+<script>
+  var myChart = echarts.init(document.getElementById('main'));
+  var option1 = {
+    title: { text: '' },
+    animationDurationUpdate: 1500,
+    animationEasingUpdate: 'quinticInOut',
+    legend: {
+      x: "center",
+      show: true,
+      data: {{ legend_data|safe }}
+    },
+    series: [
+      {
+        type: 'graph',
+        layout: 'force',
+        symbolSize: 50,
+        edgeSymbol: ['circle', 'arrow'],
+        edgeSymbolSize: [4, 4],
+        edgeLabel: {
+          normal: {
+            show: true,
+            formatter: function (x) { return x.data.name; },
+            textStyle: { fontSize: 10 }
+          }
+        },
+        force: { repulsion: 1000, edgeLength: [10, 100] },
+        focusNodeAdjacency: true,
+        draggable: true,
+        roam: true,
+        categories: {{ categories|safe }},
+        label: {
+          normal: {
+            show: true,
+            textStyle: { fontSize: 10 }
+          }
+        },
+        tooltip: {
+          formatter: function (node) {
+            return node.value ? node.data.name + ":" + node.data.showNum : node.data.name;
+          }
+        },
+        lineStyle: {
+          normal: {
+            opacity: 0.9,
+            width: 1,
+            curveness: 0.3
+          }
+        },
+        nodes: {{ datas|safe }},
+        links: {{ links|safe }}
+      }
+    ]
+  };
+  myChart.setOption(option1);
+</script>
 {% endblock %}

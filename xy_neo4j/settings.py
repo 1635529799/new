@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'myneo4j',
     'accounts'
 ]
+NEO4J_URL = "bolt://localhost:7687"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "123456"  # Ìæ»»ÎªÄãµÄÃÜÂë
+NEO4J_DB = "neo4j"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -125,9 +129,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-STATIC_DIRS = (
-    os.path.join(BASE_DIR, 'static')
-)
+# STATIC_DIRS = (
+#     os.path.join(BASE_DIR, 'static')
+# )
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )

@@ -108,45 +108,46 @@ def to_neo4j(df):
 
 
 # 数据导入图谱,数据导入实体库、存储数据库，向量数据库生成
-def service_upload(df,client):
+def service_upload(df, client):
     to_neo4j(df)
     print("图谱导入成功!")
+
     # 存储文件
-    df_base=pd.read_csv("./datas/result.csv")
-    data=pd.concat([df_base, df], axis=0, ignore_index=True)
+    df_base = pd.read_csv("./datas/result.csv")
+    data = pd.concat([df_base, df], axis=0, ignore_index=True)
     data = data.drop_duplicates()
-    data.to_csv("./datas/result.csv",index=False)
+    data.to_csv("./datas/result.csv", index=False)
+
     # 更新问题数据
     df_qbase = pd.read_csv("./datas/questions.csv")
-    en = pd.DataFrame()
-    q=df['开始节点'].values.tolist()
-    q=set(q)
-    en['en'] = list(q)
+    q = df['开始节点'].dropna().astype(str).tolist()
+    en = pd.DataFrame({'en': list(set(q))})
     data_q = pd.concat([df_qbase, en], axis=0, ignore_index=True)
-    data_q.to_csv("./datas/questions.csv",index=False)
+    data_q.to_csv("./datas/questions.csv", index=False)
+
     # 更新向量数据
-    questions=q
-    ems=embs()
-    add_embs=init_wend(questions,client)
-    all_embs=np.concatenate((ems, add_embs), axis=0)
+    questions = list(en['en'])
+    ems = embs()
+    add_embs = init_wend(questions, client)
+    all_embs = np.concatenate((ems, add_embs), axis=0)
     np.save('./datas/embeddings.npy', all_embs)
+
     # 实体库导入
     file = open("./datas/entitys.txt", "w", encoding='utf-8')
-    lines=set()
-    relations=set()
-    for i, j in data.iterrows():
-
-        head = j['开始节点']
+    lines = set()
+    for _, j in data.iterrows():
+        head = j.get('开始节点', "")
+        if not isinstance(head, str):
+            head = str(head)
         lines.add(head)
 
-        relation=j['关系']
-        relations.add(relation)
-
-    for line in set(lines):
-        if len(line)==0:
+    for line in lines:
+        if not isinstance(line, str):
+            line = str(line)
+        if len(line.strip()) == 0:
             continue
-        line=line+" " + "15" + " " + "nm" + '\n'
-        file.write(line)
+        file.write(line + " 15 nm\n")
+
 
 
 def get_answers(entity,flag,client,key,g):

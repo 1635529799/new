@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>环境影响评价知识图谱问答系统 - 登录</title>
+  <link rel="icon" href="favicon.ico" type="/static/image/ico">
+  <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/css/materialdesignicons.min.css" rel="stylesheet">
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: url('/static/image/env-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 40, 60, 0.4);
+      /* 深蓝透明层提升对比度 */
+      z-index: 0;
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .login-card h2 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+
+    .form-control {
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary {
+      background-color: #3498db;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      width: 100%;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #2b80c2;
+    }
+
+    .text-link {
+      display: block;
+      margin-top: 15px;
+    }
+
+    .system-title {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-size: 26px;
+      font-weight: bold;
+      text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.6);
+      z-index: 2;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        margin: 0 20px;
+        padding: 30px 20px;
+      }
+
+      .system-title {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay"></div>
+
+  <div class="system-title">环境影响评价知识图谱问答系统</div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <h2>用户登录</h2>
+      <form action="/accounts/login" method="post">
+        {% csrf_token %}
+        <input name="username" type="text" class="form-control" placeholder="请输入用户名" required>
+        <input name="password" type="password" class="form-control" placeholder="请输入密码" required>
+        <button class="btn btn-primary" type="submit">立即登录</button>
+        <a class="text-link" href="/accounts/register">没有账号？点击注册</a>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  {% if errorinfo %}
+  <script>
+    alert("{{ errorinfo }}");
+  </script>
+  {% endif %}
+</body>
+
+</html>

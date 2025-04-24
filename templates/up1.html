@@ -3,83 +3,166 @@
 
 {% block content %}
 <main class="lyear-layout-content">
-
-  <!-- 样式：将 file input 透明覆盖整个 drop 区域 -->
   <style>
-    #dropZone {
-      position: relative;
+    .step-flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 20px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(4px);
     }
-    #fileInput {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      transition: all 0.4s ease;
+    }
+
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .step-item.completed .step-icon {
+      background-color: #4caf50;
+      color: white;
+      border-color: #4caf50;
+    }
+
+    .step-item.completed span {
+      color: #4caf50;
+      font-weight: 500;
+    }
+
+    .step-item.current .step-icon {
+      background-color: #a5d6a7;
+      color: #2e7d32;
+      border-color: #a5d6a7;
+    }
+
+    .step-item.current span {
+      color: #2e7d32;
+      font-weight: bold;
     }
   </style>
 
-  <div class="container">
-    <div class="row">
-      <div class="box col-xs-10 mx-auto">
-        <h3 class="text-center mb-4">实体关系抽取</h3>
-        <form enctype="multipart/form-data">
-          {% csrf_token %}
-
-          <div id="dropZone" class="border border-dashed border-primary rounded-2xl p-4 text-center mb-4 bg-light" style="cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#0d6efd" class="mb-2" viewBox="0 0 16 16">
-              <path d="M.5 9.9l2.592 3.11a1 1 0 0 0 .768.29h8.28a1 1 0 0 0 .768-.29L15.5 9.9V14a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V9.9z"/>
-              <path d="M7.646 1.146a.5.5 0 0 1 .708 0L11 3.793V8.5a.5.5 0 0 1-1 0V4.707L8 2.707 5 4.707V8.5a.5.5 0 0 1-1 0V3.793l2.646-2.647z"/>
-            </svg>
-            <p class="mb-1">将 PDF 文件拖拽到此处，或点击按钮选择</p>
-            <button type="button" class="btn btn-outline-primary mb-2">选择文件</button>
-            <!-- 透明覆盖，自动响应点击 -->
-            <input type="file" id="fileInput" name="file" accept="application/pdf" onchange="handleFileSelect()">
-            <p id="fileName" class="mt-3 text-muted small">仅支持 PDF 格式</p>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-lg w-100">上传文件</button>
-        </form>
+  <div class="container" style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding-top: 6vh;">
+    <div class="card p-5 shadow-lg" style="max-width: 720px; width: 100%; border-radius: 24px; background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);">
+      <div class="text-center mb-4">
+        <i class="mdi mdi-upload mdi-48px mb-2" style="color: #2e7d32;"></i>
+        <h3 class="font-weight-bold text-success">实体关系抽取</h3>
+        <p class="text-muted small">上传环境影响评价 PDF 文件，系统将自动提取并构建知识图谱</p>
       </div>
-    </div>
-  </div>
 
-  <div class="modal fade" id="successModal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body text-center p-4">
-          <h4>✅ 上传成功！</h4>
-          <p>实体关系抽取成功</p>
-          <button class="btn btn-primary" data-dismiss="modal">关闭</button>
+      <form enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id="dropZone" class="rounded-4 text-center mb-4 position-relative p-4"
+             style="background: rgba(255,255,255,0.08); border: 2px dashed rgba(67,160,71,0.5); cursor: pointer;">
+          <input type="file" id="fileInput" name="file" accept="application/pdf"
+                 onchange="handleFileSelect()"
+                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0;">
+          <i class="mdi mdi-cloud-upload-outline" style="font-size: 48px; color: #66bb6a;"></i>
+          <p class="mt-2 mb-1 text-white">拖拽文件至此，或点击选择 PDF</p>
+          <button type="button" class="btn btn-outline-success mb-2 rounded-pill px-4 py-2">
+            <i class="mdi mdi-file-upload-outline mr-1"></i> 选择文件
+          </button>
+          <p id="fileName" class="mt-3 text-light small">仅支持 PDF 格式</p>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill">上传并抽取</button>
+      </form>
+
+      <div class="progress mt-4" style="height: 6px; display: none;" id="progressWrapper">
+        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+      </div>
+
+      <div id="extractionSteps" class="step-flow-container mt-4" style="display: none;">
+        <div class="step-item" data-step="📄 上传成功">
+          <div class="step-icon">1</div><span>📄 上传成功</span>
+        </div>
+        <div class="step-item" data-step="✂️ 正在抽取三元组">
+          <div class="step-icon">2</div><span>✂️ 正在抽取三元组</span>
+        </div>
+        <div class="step-item" data-step="🧠 正在写入图谱">
+          <div class="step-icon">3</div><span>🧠 正在写入图谱</span>
+        </div>
+        <div class="step-item" data-step="✅ 抽取流程完成">
+          <div class="step-icon"><i class="mdi mdi-check"></i></div><span>✅ 抽取流程完成</span>
         </div>
       </div>
     </div>
   </div>
-
 </main>
 
 <script src="{% static 'jquery-1.10.2.min.js' %}"></script>
 <script>
+  function handleFileSelect() {
+    const file = fileInput.files[0];
+    if (validatePDF(file)) displayFileName(file);
+    else {
+      alert('仅可上传 PDF 文件');
+      fileInput.value = '';
+      displayFileName();
+    }
+  }
+  $(document).ready(function () {
+  console.log("📌 页面加载完成，准备恢复流程轮询");
+
+  $.get('/progress', function (res) {
+    console.log("🌐 获取到状态：", res.state);
+    if (res.state && res.state !== "✅ 抽取流程完成" && res.state !== "" && res.state !== "⌛ 等待开始...") {
+      console.log("🔁 状态需要恢复，启动轮询...");
+      $('#extractionSteps').show();
+      startProgressPolling();
+    } else {
+      console.log("❌ 状态为空或已完成，无需恢复。");
+    }
+  });
+});
+  function startProgressPolling() {
+  console.log("📡 已启动轮询函数...");
+  const steps = $('#stepFlow li');
+
+}
+
+  function validatePDF(file) {
+    return file && file.type === 'application/pdf';
+  }
+
+  function displayFileName(file = null) {
+    document.getElementById('fileName').textContent = file ? file.name : '仅支持 PDF 格式';
+  }
+  function handleFileSelect() {
+    const file = document.getElementById('fileInput').files[0];
+    if (validatePDF(file)) {
+      displayFileName(file);
+    } else {
+      alert('仅可上传 PDF 文件');
+      document.getElementById('fileInput').value = '';
+      displayFileName();
+    }
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
 
-  // 拖拽高亮
-  ['dragover', 'dragenter'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      dropZone.classList.add('bg-white', 'border-primary');
-    });
-  });
-  ['dragleave', 'drop'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      dropZone.classList.remove('bg-white');
-    });
-  });
 
-  // 处理拖拽放置
+  }
   dropZone.addEventListener('drop', e => {
+    e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (validatePDF(file)) {
       fileInput.files = e.dataTransfer.files;
@@ -89,51 +172,90 @@
     }
   });
 
-  // 文件选择后校验与显示
-  function handleFileSelect() {
-    const file = fileInput.files[0];
-    if (validatePDF(file)) {
-      displayFileName(file);
-    } else {
-      alert('仅可上传 PDF 文件');
-      fileInput.value = '';
-      displayFileName();
-    }
+  ['dragover', 'dragenter'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.style.borderColor = '#81c784';
+    });
+  });
+  ['dragleave'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'rgba(67,160,71,0.5)';
+    });
+  });
+
+
+
+  function startProgressPolling() {
+    const steps = document.querySelectorAll('.step-item');
+    const stepMap = {
+      "📄 上传成功": 0,
+      "✂️ 正在抽取三元组": 1,
+      "🧠 正在写入图谱": 2,
+      "✅ 抽取流程完成": 3
+    };
+
+    $('#extractionSteps').show();
+
+    let polling = setInterval(() => {
+      $.get('/progress', function (res) {
+        const index = stepMap[res.state];
+        if (index !== undefined) {
+          steps.forEach((step, i) => {
+            step.classList.remove('completed', 'current');
+            if (i < index) step.classList.add('completed');
+            else if (i === index) step.classList.add('current');
+          });
+          if (index === 3) clearInterval(polling);
+        }
+      });
+    }, 1000);
   }
 
-  function validatePDF(file) {
-    return file && file.type === 'application/pdf';
-  }
-
-  function displayFileName(file = null) {
-    const name = file ? file.name : '';
-    document.getElementById('fileName').textContent = name || '仅支持 PDF 格式';
-  }
-
-  // 提交表单
   $('form').submit(function(e) {
     e.preventDefault();
-    var formData = new FormData(this);
+    const formData = new FormData(this);
+    const btn = $(this).find('button[type="submit"]');
+
+    btn.html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在抽取...`);
+    btn.prop('disabled', true);
+    $('#progressWrapper').show();
+    $('#progressBar').css('width', '0%');
+    startProgressPolling();
+
     $.ajax({
       url: '/upload',
       type: 'POST',
       data: formData,
       processData: false,
       contentType: false,
-      success: function(response) {
-        if (response.status === 'success') {
-          $('#successModal').modal('show');
-          fileInput.value = '';
-          displayFileName();
-        } else {
-          alert('错误: ' + response.message);
-        }
+      xhr: function () {
+        let xhr = new window.XMLHttpRequest();
+        xhr.upload.addEventListener("progress", function (evt) {
+          if (evt.lengthComputable) {
+            let percent = (evt.loaded / evt.total) * 100;
+            $('#progressBar').css('width', percent.toFixed(2) + '%');
+          }
+        }, false);
+        return xhr;
       },
-      error: function(xhr) {
+      success: function (response) {
+        btn.html('上传并抽取');
+        btn.prop('disabled', false);
+        $('#progressWrapper').hide();
+        $('#progressBar').css('width', '0%');
+        fileInput.value = '';
+        displayFileName();
+      },
+      error: function (xhr) {
+        btn.html('上传并抽取');
+        btn.prop('disabled', false);
+        $('#progressWrapper').hide();
+        $('#progressBar').css('width', '0%');
         alert('上传失败: ' + xhr.responseText);
       }
     });
   });
 </script>
-
 {% endblock %}

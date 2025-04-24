@@ -1,5 +1,5 @@
 from django.conf.urls import url
-
+from . import views
 from .views import *
 urlpatterns = [
 
@@ -12,6 +12,8 @@ urlpatterns = [
     url(r"^edit/$", edit, name="edit"),
     url(r"^add/$", add, name="add"),
     # url(r"^wenda$", wenda_html, name="wenda_html"),
-    url(r"^upload$", upload_html, name="upload_html")
+    url(r"^upload$", upload_html, name="upload_html"),
+    url(r"^progress$", views.get_progress, name="progress")
+
 
 ]

@@ -46,39 +46,47 @@ def do_register(request):
 def user_login(request):
     try:
         if request.user.is_authenticated:
+            print("用户已登录，重定向到首页")
             return redirect("/")
         if request.method == 'POST':
             login_form = LoginForm(request.POST)
-            print(login_form.is_valid())
+            print("表单是否有效：", login_form.is_valid())
+
             if login_form.is_valid():
                 username = login_form.cleaned_data["username"]
                 password = login_form.cleaned_data["password"]
-                ac="login"
-                request.session['ac'] = True
 
-                user = authenticate(username=username,password=password)
+                print(f"尝试登录：{username} / {password}")
+
+                user = authenticate(username=username, password=password)
 
                 if user is not None:
-                    # user.backend = 'django.contrib.auth.backends.ModelBackend' # 指定默认的登录验证方式
-
+                    print("登录成功")
                     login(request, user)
+                    return redirect("/")
                 else:
                     errorinfo = "账号或密码不正确"
-                    return render(request, 'login.html', {'login_form': login_form, "errorinfo":errorinfo})
-                return redirect("/")
+                    print("登录失败：", errorinfo)
+                    return render(request, 'login.html', {
+                        'login_form': login_form,
+                        "errorinfo": errorinfo
+                    })
             else:
                 errorinfo = "账号或密码不正确或格式错误"
-                return render(request, 'login.html', {'login_form': login_form, "errorinfo":errorinfo})
+                print("表单校验失败：", errorinfo)
+                return render(request, 'login.html', {
+                    'login_form': login_form,
+                    "errorinfo": errorinfo
+                })
         else:
+            print("GET 请求，返回登录页面")
             login_form = LoginForm()
-
-
             return render(request, 'login.html', {'login_form': login_form})
     except Exception as e:
         login_form = LoginForm()
-        print(e)
+        print("登录异常：", e)
         errorinfo = "系统错误"
-        return render(request, 'login.html', {'login_form': login_form, "errorinfo":errorinfo})
+        return render(request, 'login.html', {'login_form': login_form, "errorinfo": errorinfo})
 
 @login_required
 def user_logout(request):

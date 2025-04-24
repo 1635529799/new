@@ -16,8 +16,25 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.urls import path
 from django.contrib import admin
+
 from django.conf import settings
 from django.conf.urls.static import static
+import os
+
+# datas/pyneo_utils.py
+from py2neo import Graph
+
+
+def get_graph():
+    return Graph(
+        settings.NEO4J_URL,
+        auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
+        name=settings.NEO4J_DB
+    )
+
+urlpatterns = [
+
+] + static(settings.STATIC_URL, document_root=os.path.join(settings.BASE_DIR, 'static'))
 
 urlpatterns = [
     path('admin/', admin.site.urls),
