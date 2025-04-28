@@ -1,154 +1,189 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
-    <main class="lyear-layout-content">
+<main class="lyear-layout-content">
+  <style>
+    .card-transparent {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 1rem;
+    }
 
-       <div class="container-fluid">
+    .table th {
+      background-color: rgba(76, 175, 80, 0.15);
+      color: #e0f2f1;
+      font-weight: bold;
+    }
 
-            <form  id="rec" method="get">
+    .table td {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.03);
+    }
 
-                                <form action="/" method="get" id = 'searchEntityForm'>
-                                {% csrf_token %}
-                                <div class="input-group">
+    .table-hover tbody tr:hover {
+      background-color: rgba(76, 175, 80, 0.1);
+    }
 
-                                    <input type="text" id = "key" value="{{ query }}" name = "key" class="form-control" placeholder="输入要查询的节点名称或关系" aria-describedby="basic-addon1">
-                                    <span class="btn btn-primary input-group-addon" type="button" id="relationSearchButton" style="background-color:#4592fe ; padding:6px 38px" onclick="document.forms[0].action='/get_all';document.forms[0].submit();">查询</span>
+    .pagination .page-link {
+      background-color: rgba(76, 175, 80, 0.15);
+      border: none;
+      color: #ffffff;
+      margin: 0 3px;
+      border-radius: 8px;
+    }
 
-                                </div>
+    .pagination .active .page-link {
+      background-color: #43a047;
+      color: white;
+      font-weight: bold;
+    }
 
-                            </form>
+    .pagination .page-link:hover {
+      background-color: #2e7d32;
+      color: white;
+    }
 
-                            </form>
-    <div style="margin: 10px 0">
-        <a href="/add/" class="btn btn-primary">添加节点</a>
+    .btn-deep-green {
+      background-color: #2e7d32 !important;
+      border: 1px solid #1b5e20 !important;
+      color: #ffffff !important;
+      font-weight: bold;
+      padding: 6px 20px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(30, 90, 40, 0.4);
+    }
+
+    .btn-deep-green:hover {
+      background-color: #1b5e20 !important;
+      box-shadow: 0 6px 14px rgba(30, 90, 40, 0.6);
+    }
+  </style>
+
+  <div class="container-fluid">
+    <form id="rec" method="get">
+      <div class="input-group mb-4">
+        <input type="text" id="key" value="{{ query }}" name="key" class="form-control" placeholder="输入要查询的节点名称或关系">
+        <span class="btn btn-deep-green input-group-addon" type="button" onclick="document.forms[0].action='/get_all';document.forms[0].submit();">查询</span>
+      </div>
+    </form>
+
+    <div class="mb-3">
+      <a href="/add/" class="btn btn-deep-green">添加节点</a>
     </div>
-    <table class="table table-striped  table-hover ">
-        <thead>
-        <tr>
 
-            <th scope="col">开始节点</th>
-            <th scope="col">开始节点类型</th>
-            <th scope="col">关系</th>
-            <th scope="col">结束节点</th>
-            <th scope="col">结束节点类型</th>
-        </tr>
+    <div class="card-transparent">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>开始节点</th>
+            <th>开始节点类型</th>
+            <th>关系</th>
+            <th>结束节点</th>
+            <th>结束节点类型</th>
+            <th>操作</th>
+          </tr>
         </thead>
         <tbody>
-         {% for record in nodes %}
-        <tr>
-          <td>{{ record.start_node }}</td>
+          {% for record in nodes %}
+          <tr>
+            <td>{{ record.start_node }}</td>
             <td>{{ record.start_node_type }}</td>
             <td>{{ record.relationship }}</td>
             <td>{{ record.end_node }}</td>
             <td>{{ record.end_node_type }}</td>
-
-            <td><a href="/edit/?start_node={{record.start_node}}&start_node_type={{record.start_node_type}}&relationship={{record.relationship}}&end_node={{record.end_node}}&end_node_type={{record.end_node_type}}" class="btn btn-primary btn-sm">编辑</a>
-                <button id="deleteBtn" type="button"  class="btn btn-danger btn-sm  delete-btn"  data-start-node="{{ record.start_node }}" data-end-node="{{ record.end_node }}" data-relationship="{{ record.relationship }}">删除关系</button>
-        </tr>
-        {% endfor %}
+            <td>
+              <a href="/edit/?start_node={{record.start_node}}&start_node_type={{record.start_node_type}}&relationship={{record.relationship}}&end_node={{record.end_node}}&end_node_type={{record.end_node_type}}" class="btn btn-deep-green btn-sm">编辑</a>
+              <button type="button" class="btn btn-danger btn-sm delete-btn" data-start-node="{{ record.start_node }}" data-end-node="{{ record.end_node }}" data-relationship="{{ record.relationship }}">删除关系</button>
+            </td>
+          </tr>
+          {% endfor %}
         </tbody>
-    </table>
-    <!-- 确认删除的模态框 -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">确认删除</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        确定要删除这条记录吗？
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-        <form id="deleteForm" method="post">
-          {% csrf_token %}
-          <input type="hidden" name="start_node" id="start_node">
-          <input type="hidden" name="end_node" id="end_node">
-          <input type="hidden" name="relationship" id="relationship">
-          <button type="submit" class="btn btn-danger">确定删除</button>
-        </form>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <nav class="pagination mt-3">
+      <ul class="pagination">
+        {% if page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page=1&page_size={{ page_size }}">&laquo;&laquo;</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ page|add:'-1' }}&page_size={{ page_size }}">上一页</a></li>
+        {% endif %}
+
+        <li class="page-item active"><span class="page-link">第 {{ page }} 页，共 {{ total_pages }} 页</span></li>
+
+        {% if page < total_pages %}
+        <li class="page-item"><a class="page-link" href="?page={{ page|add:'1' }}&page_size={{ page_size }}">下一页</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&page_size={{ page_size }}">&raquo;&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">确认删除</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">确定要删除这条记录吗？</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+          <form id="deleteForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="start_node" id="start_node">
+            <input type="hidden" name="end_node" id="end_node">
+            <input type="hidden" name="relationship" id="relationship">
+            <button type="submit" class="btn btn-danger">确定删除</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
+</main>
 
-
-    <nav aria-label="Page navigation example">
-<!-- 分页 -->
-<!-- 分页 -->
-<div class="pagination">
-<ul class="pagination">
-    {% if page > 1 %}
-    <li class="page-item">
-      <a class="page-link" href="?page=1&page_size={{ page_size }}" aria-label="Previous">
-        <span aria-hidden="true">&laquo;&laquo;</span>
-      </a>
-    </li>
-    {% endif %}
-    {% if page > 1 %}
-        <li class="page-item"> <a href="?page={{ page|add:'-1' }}&page_size={{ page_size }}">上一页</a></li>
-
-    {% endif %}
-     <li class="page-item active"><span>第 {{ page }} 页，共 {{ total_pages }} 页</span></li>
-    {% if page < total_pages %}
-        <li class="page-item"> <a href="?page={{ page|add:'1' }}&page_size={{ page_size }}">下一页</a></li>
-
-    {% endif %}
-    {% if page < total_pages  %}
-    <li class="page-item">
-      <a class="page-link" href="?page={{ total_pages }}&page_size={{ page_size }}" aria-label="Previous">
-        <span aria-hidden="true">&raquo;&raquo;</span>
-      </a>
-    </li>
-    {% endif %}
-</ul>
-</div>
-</nav>
-</div>
-
-    </main>
-    <script src="/static/jquery-1.10.2.min.js"></script>
-    <script src="/static/echarts.min.js"></script>
-   <script>
-    document.querySelectorAll('.delete-btn').forEach(button => {
-      button.addEventListener('click', function() {
-       const startNode = this.getAttribute('data-start-node');
-            const endNode = this.getAttribute('data-end-node');
-            const relationship = this.getAttribute('data-relationship');
-
-            // 将值填充到隐藏的表单字段中
-            document.getElementById('start_node').value = startNode;
-            document.getElementById('end_node').value = endNode;
-            document.getElementById('relationship').value = relationship;
-        // 显示模态框
-        $('#deleteModal').modal('show');
-      });
+<script src="/static/jquery-1.10.2.min.js"></script>
+<script>
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const startNode = this.getAttribute('data-start-node');
+      const endNode = this.getAttribute('data-end-node');
+      const relationship = this.getAttribute('data-relationship');
+      document.getElementById('start_node').value = startNode;
+      document.getElementById('end_node').value = endNode;
+      document.getElementById('relationship').value = relationship;
+      $('#deleteModal').modal('show');
     });
+  });
 
-    // 提交删除表单时，使用Ajax发送请求
-        $('#deleteForm').on('submit', function(event) {
-          event.preventDefault(); // 阻止表单默认提交行为
-          const formData = $(this).serialize(); // 序列化表单数据
-          $.ajax({
-            type: 'POST',
-            url: '/delete', // 替换为你的删除视图URL
-            data: formData,
-            success: function(response) {
-              if (response.success) {
-                // alert('删除成功！');
-                location.reload(); // 刷新页面
-              } else {
-                alert('删除失败，请重试！');
-              }
-            },
-            error: function(xhr, status, error) {
-              console.error(error);
-              alert('发生错误，请检查控制台日志。');
-            }
-          });
-        });
+  $('#deleteForm').on('submit', function (event) {
+    event.preventDefault();
+    const formData = $(this).serialize();
+    $.ajax({
+      type: 'POST',
+      url: '/delete',
+      data: formData,
+      success: function (response) {
+        if (response.success) {
+          location.reload();
+        } else {
+          alert('删除失败，请重试！');
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error(error);
+        alert('发生错误，请检查控制台日志。');
+      }
+    });
+  });
 </script>
 {% endblock %}

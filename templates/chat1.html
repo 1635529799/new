@@ -1,189 +1,218 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block content %}
-    <main class="lyear-layout-content">
+<main class="lyear-layout-content">
+  <style>
+    .glass-card {
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      padding: 24px;
+    }
+    .section-title {
+      font-weight: bold;
+      font-size: 1.3rem;
+      color: #ffffff;
+    }
+    .highlight-box {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      color: #f8f9fa;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .toggle-btn {
+      font-size: 0.9rem;
+      padding: 4px 12px;
+      margin-left: 12px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #2e7d32;
+      border: none;
+      border-radius: 8px;
+    }
+    .question-label {
+      font-weight: bold;
+      color: #ffffff;
+    }
+    textarea.form-control {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+      padding: 12px;
+    }
+    textarea.form-control::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  </style>
 
-        <div class="container-fluid">
+  <div class="container" style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding-top: 6vh;">
+    <div class="glass-card" style="max-width: 800px; width: 100%;">
 
-            <div class="row">
+      <!-- 问题输入 -->
+      <div class="mb-4">
+        <h4 class="section-title">
+          <i class="mdi mdi-comment-question-outline"></i> 提问
+        </h4>
+        <form action="/chat" method="get">
+          {% csrf_token %}
+          <div class="form-group">
+            <textarea class="form-control" rows="4" name="key" placeholder="请输入问题...">{{ key }}</textarea>
+          </div>
+          <div class="text-right">
+            <button id="queryBtn" class="btn btn-success btn-lg px-5 rounded-pill" type="submit">
+              <i class="mdi mdi-magnify"></i> 查找答案
+            </button>
+          </div>
+        </form>
+      </div>
 
+      {% if daan %}
+      <div class="mb-4">
+        <h4 class="section-title">✅ 答案</h4>
+        <div class="highlight-box">{{ daan|safe }}</div>
+      </div>
+      {% endif %}
 
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header"><h4>请输入问题</h4></div>
-                        <div class="card-body">
+      {% if sen %}
+      <div class="mb-4">
+        <h4 class="section-title">🎯 实体识别结果</h4>
+        <div class="highlight-box">{{ sen }}</div>
+      </div>
+      {% endif %}
 
-                            <form action="/chat" method="get">
-                                {% csrf_token %}
-                                <div class="form-group">
-{#                                    <label for="example-nf-email">推荐问题：#}
-{#                                    {% for rec in recommends %}#}
-{#                                        {{ rec }}#}
-{#                                {% endfor %}#}
-{#                                    。#}
-{#                                    </label>#}
-{#                                    <input class="form-control" type="text" name="key" placeholder="请输入问题"#}
-{#                                           value="{{ key }}">#}
+      {% if text %}
+      <div class="mb-4">
+        <h4 class="section-title">📄 原文溯源</h4>
+        <div class="highlight-box">{{ text }}</div>
+      </div>
+      {% endif %}
 
-                                    <textarea class="form-control" rows="4" name="key" placeholder="请输入问题">{{  key }}</textarea>
+      {% if legend_data %}
+      <div class="mb-4">
+        <h4 class="section-title">🧠 关系图谱</h4>
+        <div id="main" style="width: 100%; height: 400px;"></div>
+      </div>
+      {% endif %}
 
-                                </div>
-
-                                <div class="form-group">
-                                    <button class="btn btn-primary" type="submit">查找答案</button>
-                                </div>
-                            </form>
-
-                        </div>
-                    </div>
-{#                    <div class="col-md-12">#}
-{#                    <div class="card">#}
-{#                       #}
-{#                    </div>#}
-{##}
-{##}
-{#                </div>#}
-                    <div class="card">
-                        <div class="card-header"><h4>查询到结果</h4></div>
-                        <div class="card-body">
-
-                            {% if daan %}
-                                <h3 style="color: red">答案：{{ daan | safe }}</h3>
-                                {#                                    <p>注意：绿色为识别的到的节点和关系，红色为neo4j查询的最后结果！</p>#}
-                            {% endif %}
-                            {% if sen %}
-                                <hr>
-                                <h3>实体识别结果：{{ sen }}</h3>
-
-                            {% endif %}
-                            {% if text %}
-                                <hr>
-                                <h3>原文溯源：{{ text }}</h3>
-
-                            {% endif %}
-
-
-                        </div>
-                       {% if legend_data %}
-                                  <h3 style="padding-left: 20px;">关系图谱：</h3>
-{#                        <div class="card-body">#}
-
-                                  <div id="main" style="width: 100%;height: 300px"></div>
-                       {% endif %}
-
-
-{##}
-{#                        </div>#}
-                    </div>
-
-                </div>
-
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header"><h4>知识图谱问答小助手--<a href="/chat?clean=1">点击清除历史记录</a></h4></div>
-                        <div class="card-body">
-
-                            <div class="row">
-                                <!--单按钮下拉菜单-->
-                                {% for wen in all_wendas %}
-                                    <div class="col-lg-12">
-                                        <h5>{{ wen.question }}</h5>
-                                        {{ wen.anster }}
-                                        <hr>
-                                    </div>
-                                {% endfor %}
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-
-            </div>
-
+      <!-- 历史记录模块 -->
+      <div class="mb-2">
+        <h4 class="section-title">
+          🕒 历史记录
+          <button class="toggle-btn" id="toggleHistoryBtn">展开/隐藏</button>
+          <a href="/chat?clean=1" class="text-danger small ml-3">清除</a>
+        </h4>
+        <div id="historyContainer" style="display: none;">
+          {% for wen in all_wendas %}
+          <div class="highlight-box mb-3">
+            <span class="question-label">Q: {{ wen.question }}</span>
+            <p class="mt-1">{{ wen.anster }}</p>
+          </div>
+          {% empty %}
+          <div class="highlight-box">暂无历史记录</div>
+          {% endfor %}
         </div>
+      </div>
 
-    </main>
-     <script src="/static/jquery-1.10.2.min.js"></script>
-    <script src="/static/echarts.min.js"></script>
-    <script type="text/javascript">
-        var myChart = echarts.init(document.getElementById('main'));
-        option1 = {
-            // backgroundColor: "white",
-            title: {
-                text: '',
-                textStyle: {
-                    // color: "white",
-                    fontWeight: "lighter",
-                }
-            },
-            animationDurationUpdate: 1500,
-            animationEasingUpdate: 'quinticInOut',
-            legend: {
-                x: "center",
-                show: true,
-                data: {{ legend_data | safe }}
-            },
-            series: [
-                {
-                    type: 'graph',
-                    layout: 'force',
-                    symbolSize: 50,
-                    edgeSymbol: ['circle', 'arrow'],
-                    edgeSymbolSize: [4, 4],
-                    edgeLabel: {
-                        normal: {
-                            show: true,
-                            formatter: function (x) {
-                                return x.data.name;
-                            },
-                            textStyle: {
-                                fontSize: 10
-                            },
-                        }
-                    },
-                    force: {
-                        repulsion: 2500,
-                        edgeLength: [10, 100]
-                    },
-                    focusNodeAdjacency: true,
-                    draggable: true,
-                    roam: true,
-                    categories: {{ categories | safe }},
-                    label: {
-                        normal: {
-                            show: true,
-                            textStyle: {
-                                fontSize: 10
-                            },
-                        }
-                    },
-                    force: {
-                        repulsion: 1000
-                    },
-                    tooltip: {
-                        formatter: function (node) { // 区分连线和节点，节点上额外显示其他数字
-                            if (!node.value) {
-                                return node.data.name;
-                            } else {
-                                return node.data.name + ":" + node.data.showNum;
-                            }
-                        },
-                    },
-                    lineStyle: {
-                        normal: {
-                            opacity: 0.9,
-                            width: 1,
-                            curveness: 0.3
-                        }
-                    },
-                    // progressiveThreshold: 700,
-                    nodes: {{ datas | safe }},
-                    links: {{ links | safe }},
+    </div>
+  </div>
 
-                }
-            ]
-        };
-        myChart.setOption(option1);
-    </script>
+  <!-- 全局遮罩加载提示 -->
+  <div id="loadingOverlay" style="display: none; position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); z-index: 9999; text-align: center;">
+    <div style="color:white; margin-top: 20%; font-size: 20px;">
+      🔍 正在查找答案，请稍候...
+    </div>
+  </div>
+
+  <script src="/static/jquery-1.10.2.min.js"></script>
+  <script src="/static/echarts.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const btn = document.getElementById('toggleHistoryBtn');
+      const container = document.getElementById('historyContainer');
+      const form = document.querySelector("form");
+      const submitBtn = document.getElementById("queryBtn");
+      const overlay = document.getElementById("loadingOverlay");
+
+      if (btn && container) {
+        btn.addEventListener('click', function () {
+          container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+
+      if (form && submitBtn && overlay) {
+        form.addEventListener('submit', function () {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在查找...';
+          overlay.style.display = 'block';
+        });
+      }
+    });
+
+    {% if legend_data %}
+    var myChart = echarts.init(document.getElementById('main'));
+    var option1 = {
+      title: { text: '', textStyle: { fontWeight: "lighter" } },
+      animationDurationUpdate: 1500,
+      animationEasingUpdate: 'quinticInOut',
+      legend: {
+        x: "center",
+        show: true,
+        data: {{ legend_data|safe }}
+      },
+      series: [
+        {
+          type: 'graph',
+          layout: 'force',
+          symbolSize: 50,
+          edgeSymbol: ['circle', 'arrow'],
+          edgeSymbolSize: [4, 4],
+          edgeLabel: {
+            normal: {
+              show: true,
+              formatter: function (x) { return x.data.name; },
+              textStyle: { fontSize: 10 }
+            }
+          },
+          force: {
+            repulsion: 1000,
+            edgeLength: [10, 100]
+          },
+          focusNodeAdjacency: true,
+          draggable: true,
+          roam: true,
+          categories: {{ categories|safe }},
+          label: {
+            normal: {
+              show: true,
+              textStyle: { fontSize: 10 }
+            }
+          },
+          tooltip: {
+            formatter: function (node) {
+              return node.data.name;
+            }
+          },
+          lineStyle: {
+            normal: {
+              opacity: 0.9,
+              width: 1,
+              curveness: 0.3
+            }
+          },
+          nodes: {{ datas|safe }},
+          links: {{ links|safe }}
+        }
+      ]
+    };
+    myChart.setOption(option1);
+    {% endif %}
+  </script>
+</main>
 {% endblock %}

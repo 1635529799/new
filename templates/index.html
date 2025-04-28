@@ -3,104 +3,132 @@
 
 {% block content %}
 <style>
-
-  body, html {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background: url("{% static 'images/main-bg.jpg' %}") no-repeat center center fixed;
-    background-size: cover;
-  }
-
-  .lyear-layout-content {
-    min-height: 100vh;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.4));
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    padding: 2rem;
-  }
-
-  .card {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 16px;
+  .graph-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px 60px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .graph-header h3 {
+    font-weight: bold;
+    text-align: center;
+    font-size: 24px;
+    color: #f5f5f5;
+    margin-bottom: 30px;
   }
 
   .form-control {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
     padding: 14px 18px;
     font-size: 15px;
-    color: #2e7d32;
+    color: #ffffff;
   }
 
   .form-control::placeholder {
-    color: #6b8c6a;
+    color: rgba(255, 255, 255, 0.6);
     font-style: italic;
   }
 
-  .btn-primary {
-    background-color: #43a047;
-    border-color: #43a047;
+  .btn-action {
+    background-color: #dcedc8;
+    border: none;
+    color: #2e7d32;
     border-radius: 10px;
-    font-size: 16px;
-    padding: 10px 28px;
+    font-size: 15px;
+    padding: 10px 26px;
     font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0, 128, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(200, 255, 200, 0.25);
     transition: all 0.3s ease;
+    margin: 8px 12px;
+    min-width: 140px;
   }
 
-  .btn-primary:hover {
-    background-color: #2e7d32;
-    box-shadow: 0 6px 14px rgba(0, 128, 0, 0.35);
+  .btn-action:hover {
+    background-color: #c5e1a5;
+    box-shadow: 0 6px 14px rgba(200, 255, 200, 0.4);
+  }
+
+  .action-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  #main {
+    width: 100%;
+    height: 540px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 30px;
+  }
+
+  #loadingOverlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    text-align: center;
+  }
+
+  #loadingOverlay div {
+    color: white;
+    font-size: 20px;
+    margin-top: 20%;
   }
 </style>
 
 <main class="lyear-layout-content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4>
-              <a href="http://localhost:7474/browser/" target="_blank">查看图谱数据库</a>
-            </h4>
-          </div>
-          <div class="card-body">
-            <form action="/" method="get">
-              {% csrf_token %}
-              <div class="input-group">
-                <input type="text" id="key" value="{{ inputs }}" name="key" class="form-control" placeholder="请输入节点名称">
-                <span class="btn btn-primary input-group-addon" type="button" onclick="this.form.action='/';this.form.submit();">查询</span>
-                <span class="btn btn-primary input-group-addon" type="button" onclick="this.form.action='/rec';this.form.submit();">在线推荐</span>
-              </div>
-            </form>
-            {% if ss %}
-              <div class="mt-3">
-                <h5 class="text-success">{{ ss|safe }}</h5>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <div id="main" style="width: 100%; height: 640px"></div>
-          </div>
-        </div>
-      </div>
+  <div class="graph-container">
+    <div class="graph-header">
+      <h3>知识图谱查询</h3>
     </div>
+    <form id="queryForm" action="/" method="get">
+      {% csrf_token %}
+      <div class="form-group mb-3">
+        <input type="text" name="key" id="key" value="{{ inputs }}" class="form-control" placeholder="请输入要查询的实体节点名称">
+      </div>
+      <div class="action-group">
+        <button type="button" class="btn btn-action" onclick="submitForm('/')">查询</button>
+        <button type="button" class="btn btn-action" onclick="submitForm('/rec')">在线推荐</button>
+        <a href="http://localhost:7474/browser/" class="btn btn-action" target="_blank">Neo4j 控制台</a>
+      </div>
+    </form>
+
+    {% if ss %}
+    <div class="text-center text-light mt-3">
+      <strong>{{ ss|safe }}</strong>
+    </div>
+    {% endif %}
+
+    <div id="main"></div>
   </div>
+
+  <div id="loadingOverlay"><div>正在查找图谱，请稍候...</div></div>
 </main>
 
 <script src="{% static 'jquery-1.10.2.min.js' %}"></script>
 <script src="{% static 'echarts.min.js' %}"></script>
 <script>
+  function submitForm(path) {
+    const form = document.getElementById('queryForm');
+    const overlay = document.getElementById('loadingOverlay');
+    form.action = path;
+    overlay.style.display = 'block';
+    form.submit();
+  }
+
   var myChart = echarts.init(document.getElementById('main'));
   var option1 = {
     title: { text: '' },

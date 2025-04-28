@@ -5,6 +5,7 @@ import json
 import numpy as np
 import faiss
 from datas.pyneo_utils import *
+
 from datas.entity_dict import get_ents,embs
 from .LLM import get_answer
 
@@ -75,7 +76,7 @@ def get_entitys(text,client,list_embs,list_texts):
     return best_text
 
 def to_neo4j(df):
-    g = Graph("bolt://localhost:7687", user="neo4j", password="123456")
+    g = get_graph()
     df.columns = ['开始节点', '开始节点类型', '关系', '结束节点', '结束节点类型', "文本"]
 
     for index, row in df.iterrows():

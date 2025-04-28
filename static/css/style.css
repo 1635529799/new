@@ -397,3 +397,17 @@ input[type="checkbox"]:checked + .check-trail .check-handler::before {
   color:#1ab394;
   text-decoration:none;
 }
+
+/* ✅ 毛玻璃侧边栏样式 */
+.lyear-layout-sidebar-scroll {
+  background: linear-gradient(to bottom, rgba(76, 175, 80, 0.08), rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-right: 1px solid rgba(255,255,255,0.15) !important;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 防止子菜单背景遮盖毛玻璃效果 */
+.sidebar-main {
+  background: transparent !important;
+}

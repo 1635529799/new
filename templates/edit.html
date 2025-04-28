@@ -1,53 +1,81 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-    <main class="lyear-layout-content">
-        <div class="container">
-    <nav aria-label="breadcrumb" style="margin: 10px 0">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">编辑</a></li>
-      </ol>
-    </nav>
-    <form method="post" action="/edit/">
-    {% csrf_token %}
-    <div class="mb-5 row form-group">
-        <label for="formGroupExampleInput" class="col-sm-2 col-form-label">开始节点</label>
-        <div class="col-sm-10">
-            <input type="text" class="form-control" placeholder="开始节点" name="start_node" value="{{ start_node }}">
-        </div>
-    </div>
-    <div class="mb-3 row form-group">
-        <label for="formGroupExampleInput" class="col-sm-2 col-form-label">开始节点类型</label>
-        <div class="col-sm-10">
-            <input type="text" class="form-control" placeholder="开始节点类型" name="start_node_type" value="{{ start_node_type }}">
-        </div>
-    </div>
-    <div class="mb-3 row form-group">
-        <label for="formGroupExampleInput2" class="col-sm-2 col-form-label">关系</label>
-        <div class="col-sm-10">
-            <input type="text" class="form-control" placeholder="关系" name="relationship" value="{{ relationship }}">
-        </div>
-    </div>
-            <div class="mb-3 row form-group">
-        <label for="formGroupExampleInput" class="col-sm-2 col-form-label">结束节点</label>
-        <div class="col-sm-10">
-            <input type="text" class="form-control" placeholder="结束节点" name="end_node" value="{{ end_node }}">
-        </div>
-    </div>
-    <div class="mb-3 row form-group">
-        <label for="formGroupExampleInput" class="col-sm-2 col-form-label">结束节点类型</label>
-        <div class="col-sm-10">
-            <input type="text" class="form-control" placeholder="结束节点类型" name="end_node_type" value="{{ end_node_type }}">
-        </div>
-    </div>
-    <!-- 可以根据需要添加更多字段 -->
-    <button type="submit" class="btn btn-primary">保存并返回</button>
-</form>
+<main class="lyear-layout-content">
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
 
+    .form-control {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(6px);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+    }
 
-</div>
-    </main>
-    <script src="/static/jquery-1.10.2.min.js"></script>
-    <script src="/static/echarts.min.js"></script>
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
 
+    .btn-primary {
+      background-color: #388e3c;
+      border-color: #2e7d32;
+      color: white;
+      border-radius: 10px;
+      padding: 10px 24px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #2e7d32;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    }
+
+    label {
+      color: #ffffff;
+      font-weight: bold;
+    }
+  </style>
+
+  <div class="container" style="max-width: 720px;">
+    <div class="glass-card mt-4">
+      <h4 class="text-white mb-4">编辑知识图谱关系</h4>
+      <form method="post" action="/edit/">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label>开始节点</label>
+          <input type="text" class="form-control" name="start_node" placeholder="开始节点" value="{{ start_node }}">
+        </div>
+        <div class="mb-4">
+          <label>开始节点类型</label>
+          <input type="text" class="form-control" name="start_node_type" placeholder="开始节点类型" value="{{ start_node_type }}">
+        </div>
+        <div class="mb-4">
+          <label>关系</label>
+          <input type="text" class="form-control" name="relationship" placeholder="关系" value="{{ relationship }}">
+        </div>
+        <div class="mb-4">
+          <label>结束节点</label>
+          <input type="text" class="form-control" name="end_node" placeholder="结束节点" value="{{ end_node }}">
+        </div>
+        <div class="mb-4">
+          <label>结束节点类型</label>
+          <input type="text" class="form-control" name="end_node_type" placeholder="结束节点类型" value="{{ end_node_type }}">
+        </div>
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary">保存并返回</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
 {% endblock %}

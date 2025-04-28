@@ -4,6 +4,8 @@
     <file url="file://$PROJECT_DIR$/datas/guojiasafe.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/datas/result.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/datas/safe.csv" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/templates/chat1.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/test_neo4j.py" charset="UTF-8" />
     <file url="PROJECT" charset="GBK" />
   </component>
 </project>
