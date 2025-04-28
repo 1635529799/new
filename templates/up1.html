@@ -4,6 +4,7 @@
 {% block content %}
 <main class="lyear-layout-content">
   <style>
+    /* 卡片和步骤流程样式 */
     .step-flow-container {
       display: flex;
       flex-direction: column;
@@ -14,7 +15,6 @@
       border: 1px solid rgba(255,255,255,0.15);
       backdrop-filter: blur(4px);
     }
-
     .step-item {
       display: flex;
       align-items: center;
@@ -22,7 +22,6 @@
       font-size: 14px;
       transition: all 0.4s ease;
     }
-
     .step-icon {
       width: 24px;
       height: 24px;
@@ -37,60 +36,56 @@
       flex-shrink: 0;
       transition: all 0.3s ease;
     }
-
     .step-item.completed .step-icon {
       background-color: #4caf50;
       color: white;
       border-color: #4caf50;
     }
-
     .step-item.completed span {
       color: #4caf50;
       font-weight: 500;
     }
-
     .step-item.current .step-icon {
       background-color: #a5d6a7;
       color: #2e7d32;
       border-color: #a5d6a7;
     }
-
     .step-item.current span {
       color: #2e7d32;
       font-weight: bold;
     }
   </style>
 
-  <div class="container" style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding-top: 6vh;">
+   <div class="container" style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding-top: 6vh;">
     <div class="card p-5 shadow-lg" style="max-width: 720px; width: 100%; border-radius: 24px; background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);">
+
+      <!-- 顶部 -->
       <div class="text-center mb-4">
         <i class="mdi mdi-upload mdi-48px mb-2" style="color: #2e7d32;"></i>
         <h3 class="font-weight-bold text-success">实体关系抽取</h3>
-        <p class="text-muted small">上传环境影响评价 PDF 文件，系统将自动提取并构建知识图谱</p>
+        <p class="text-muted small">上传环境影响评价 PDF / TXT 文件，系统将自动提取并构建知识图谱</p>
       </div>
 
-      <form enctype="multipart/form-data">
+      <!-- 上传表单 -->
+      <form enctype="multipart/form-data" id="upload-form">
         {% csrf_token %}
-        <div id="dropZone" class="rounded-4 text-center mb-4 position-relative p-4"
-             style="background: rgba(255,255,255,0.08); border: 2px dashed rgba(67,160,71,0.5); cursor: pointer;">
-          <input type="file" id="fileInput" name="file" accept="application/pdf"
-                 onchange="handleFileSelect()"
-                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0;">
+        <div id="dropZone" class="rounded-4 text-center mb-4 position-relative p-4" style="background: rgba(255,255,255,0.08); border: 2px dashed rgba(67,160,71,0.5); cursor: pointer;">
+          <input type="file" id="fileInput" name="file" accept=".pdf,.txt" onchange="handleFileSelect()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0;">
           <i class="mdi mdi-cloud-upload-outline" style="font-size: 48px; color: #66bb6a;"></i>
-          <p class="mt-2 mb-1 text-white">拖拽文件至此，或点击选择 PDF</p>
-          <button type="button" class="btn btn-outline-success mb-2 rounded-pill px-4 py-2">
-            <i class="mdi mdi-file-upload-outline mr-1"></i> 选择文件
-          </button>
-          <p id="fileName" class="mt-3 text-light small">仅支持 PDF 格式</p>
+          <p class="mt-2 mb-1" style="color: #e8f5e9; font-weight: 500;">拖拽文件至此，或点击选择文件</p>
+          <p id="fileHint" class="mt-2" style="color: #c8e6c9;">仅支持 <strong>.pdf</strong> / <strong>.txt</strong> 格式</p>
+          <p id="fileName" class="mt-2 text-success small"></p>
         </div>
 
         <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill">上传并抽取</button>
       </form>
 
+      <!-- 上传进度条 -->
       <div class="progress mt-4" style="height: 6px; display: none;" id="progressWrapper">
         <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
       </div>
 
+      <!-- 抽取流程步骤 -->
       <div id="extractionSteps" class="step-flow-container mt-4" style="display: none;">
         <div class="step-item" data-step="📄 上传成功">
           <div class="step-icon">1</div><span>📄 上传成功</span>
@@ -105,157 +100,224 @@
           <div class="step-icon"><i class="mdi mdi-check"></i></div><span>✅ 抽取流程完成</span>
         </div>
       </div>
+
+      <!-- 抽取结果展示区 -->
+      <div id="extractionResultsContainer" class="mt-5" style="display: none;">
+        <h5 class="text-success mb-3">📚 抽取结果</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover table-bordered small" style="background: rgba(255,255,255,0.08); backdrop-filter: blur(4px); border-radius: 12px;">
+            <thead class="thead-light">
+              <tr>
+                <th>源实体 (source)</th>
+                <th>目标实体 (target)</th>
+                <th>关系类型 (rel_type)</th>
+                <th>原文片段 (source_text)</th>
+              </tr>
+            </thead>
+            <tbody id="extractionResultsBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </main>
 
+
 <script src="{% static 'jquery-1.10.2.min.js' %}"></script>
 <script>
-  function handleFileSelect() {
-    const file = fileInput.files[0];
-    if (validatePDF(file)) displayFileName(file);
-    else {
-      alert('仅可上传 PDF 文件');
-      fileInput.value = '';
-      displayFileName();
-    }
-  }
-  $(document).ready(function () {
-  console.log("📌 页面加载完成，准备恢复流程轮询");
-
+$(document).ready(function () {
   $.get('/progress', function (res) {
-    console.log("🌐 获取到状态：", res.state);
     if (res.state && res.state !== "✅ 抽取流程完成" && res.state !== "" && res.state !== "⌛ 等待开始...") {
-      console.log("🔁 状态需要恢复，启动轮询...");
       $('#extractionSteps').show();
       startProgressPolling();
-    } else {
-      console.log("❌ 状态为空或已完成，无需恢复。");
     }
   });
 });
-  function startProgressPolling() {
-  console.log("📡 已启动轮询函数...");
-  const steps = $('#stepFlow li');
+function displayExtractionResult(data) {
+  const container = document.createElement('div');
+  container.className = "mt-4 p-3 rounded-3";
+  container.style.background = "rgba(255,255,255,0.12)";
+  container.style.backdropFilter = "blur(6px)";
+  container.style.border = "1px solid rgba(255,255,255,0.15)";
 
+  const title = document.createElement('h5');
+  title.textContent = "🎯 抽取完成结果：";
+  title.style.color = "#4caf50";
+  container.appendChild(title);
+
+  const list = document.createElement('ul');
+  list.style.listStyle = "none";
+  list.style.padding = "0";
+
+  data.forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = `🔹 <b>${item.source}</b> — <b>${item.rel_type}</b> —> <b>${item.target}</b>`;
+    list.appendChild(li);
+  });
+
+  container.appendChild(list);   // ✅ 只这里 append 一次
+  document.querySelector('.card').appendChild(container);
 }
 
-  function validatePDF(file) {
-    return file && file.type === 'application/pdf';
-  }
 
-  function displayFileName(file = null) {
-    document.getElementById('fileName').textContent = file ? file.name : '仅支持 PDF 格式';
-  }
-  function handleFileSelect() {
-    const file = document.getElementById('fileInput').files[0];
-    if (validatePDF(file)) {
-      displayFileName(file);
-    } else {
-      alert('仅可上传 PDF 文件');
-      document.getElementById('fileInput').value = '';
-      displayFileName();
-    }
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
+function validateFile(file) {
+  const allowedExtensions = ['pdf', 'txt'];
+  if (!file) return false;
+  const extension = file.name.split('.').pop().toLowerCase();
+  return allowedExtensions.includes(extension);
+}
 
-
+function handleFileSelect() {
+  const file = document.getElementById('fileInput').files[0];
+  if (file && validateFile(file)) {
+    document.getElementById('fileName').textContent = `已选择文件: ${file.name}`;
+  } else {
+    alert('❌ 仅支持 PDF 或 TXT 文件，请重新选择！');
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileName').textContent = '';
   }
-  dropZone.addEventListener('drop', e => {
+}
+
+// 拖拽区域高亮
+const dropZone = document.getElementById('dropZone');
+['dragover', 'dragenter'].forEach(evt => {
+  dropZone.addEventListener(evt, e => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (validatePDF(file)) {
-      fileInput.files = e.dataTransfer.files;
-      displayFileName(file);
-    } else {
-      alert('请上传 PDF 格式的文件');
-    }
+    dropZone.style.borderColor = '#81c784';
   });
-
-  ['dragover', 'dragenter'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      dropZone.style.borderColor = '#81c784';
-    });
-  });
-  ['dragleave'].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
-      e.preventDefault();
-      dropZone.style.borderColor = 'rgba(67,160,71,0.5)';
-    });
-  });
-
-
-
-  function startProgressPolling() {
-    const steps = document.querySelectorAll('.step-item');
-    const stepMap = {
-      "📄 上传成功": 0,
-      "✂️ 正在抽取三元组": 1,
-      "🧠 正在写入图谱": 2,
-      "✅ 抽取流程完成": 3
-    };
-
-    $('#extractionSteps').show();
-
-    let polling = setInterval(() => {
-      $.get('/progress', function (res) {
-        const index = stepMap[res.state];
-        if (index !== undefined) {
-          steps.forEach((step, i) => {
-            step.classList.remove('completed', 'current');
-            if (i < index) step.classList.add('completed');
-            else if (i === index) step.classList.add('current');
-          });
-          if (index === 3) clearInterval(polling);
-        }
-      });
-    }, 1000);
-  }
-
-  $('form').submit(function(e) {
+});
+['dragleave', 'drop'].forEach(evt => {
+  dropZone.addEventListener(evt, e => {
     e.preventDefault();
-    const formData = new FormData(this);
-    const btn = $(this).find('button[type="submit"]');
+    dropZone.style.borderColor = 'rgba(67,160,71,0.5)';
+  });
+});
+dropZone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file && validateFile(file)) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    document.getElementById('fileName').textContent = `已选择文件: ${file.name}`;
+  } else {
+    alert('❌ 请上传 PDF 或 TXT 格式文件');
+    document.getElementById('fileName').textContent = '';
+  }
+});
 
-    btn.html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在抽取...`);
-    btn.prop('disabled', true);
-    $('#progressWrapper').show();
-    $('#progressBar').css('width', '0%');
-    startProgressPolling();
+// 轮询流程进度
+function startProgressPolling() {
+  const steps = document.querySelectorAll('.step-item');
+  const stepMap = {
+    "📄 上传成功": 0,
+    "✂️ 正在抽取三元组": 1,
+    "🧠 正在写入图谱": 2,
+    "✅ 抽取流程完成": 3
+  };
 
-    $.ajax({
-      url: '/upload',
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      xhr: function () {
-        let xhr = new window.XMLHttpRequest();
-        xhr.upload.addEventListener("progress", function (evt) {
-          if (evt.lengthComputable) {
-            let percent = (evt.loaded / evt.total) * 100;
-            $('#progressBar').css('width', percent.toFixed(2) + '%');
+  $('#extractionSteps').show();
+
+  let polling = setInterval(() => {
+    $.get('/progress', function (res) {
+      const index = stepMap[res.state];
+
+      if (index !== undefined) {
+        steps.forEach((step, i) => {
+          step.classList.remove('completed', 'current');
+          if (i < index) {
+            step.classList.add('completed');
+          } else if (i === index) {
+            step.classList.add('current');
           }
-        }, false);
-        return xhr;
-      },
-      success: function (response) {
-        btn.html('上传并抽取');
-        btn.prop('disabled', false);
-        $('#progressWrapper').hide();
-        $('#progressBar').css('width', '0%');
-        fileInput.value = '';
-        displayFileName();
-      },
-      error: function (xhr) {
-        btn.html('上传并抽取');
-        btn.prop('disabled', false);
-        $('#progressWrapper').hide();
-        $('#progressBar').css('width', '0%');
-        alert('上传失败: ' + xhr.responseText);
+        });
+
+        if (index === 3) {  // 到最后一步
+          clearInterval(polling);
+          fetchExtractionResults();  // 去请求结果
+        }
       }
     });
+  }, 500); // 每0.5秒轮询一次
+}
+
+
+// 上传表单提交
+$('#upload-form').submit(function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const btn = $(this).find('button[type="submit"]');
+  const fileInput = document.getElementById('fileInput');
+
+  // 开始上传，按钮loading
+  btn.html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在抽取...`);
+  btn.prop('disabled', true);
+  fileInput.disabled = true;
+
+  $('#progressWrapper').show();
+  $('#progressBar').css('width', '0%');
+
+  $.ajax({
+    url: '/upload',
+    type: 'POST',
+    data: formData,
+    processData: false,
+    contentType: false,
+    xhr: function () {
+      let xhr = new window.XMLHttpRequest();
+      xhr.upload.addEventListener("progress", function (evt) {
+        if (evt.lengthComputable) {
+          let percent = (evt.loaded / evt.total) * 100;
+          $('#progressBar').css('width', percent.toFixed(2) + '%');
+        }
+      }, false);
+      return xhr;
+    },
+    success: function (response) {
+      if (response.status === 'success') {
+        // 上传成功后再启动轮询
+        startProgressPolling();
+      } else {
+        alert('❌ 上传失败: ' + (response.message || '未知错误'));
+      }
+    },
+    error: function (xhr) {
+      alert('❌ 上传出错: ' + xhr.responseText);
+    },
+    complete: function () {
+      // 无论成功失败，最后恢复按钮
+      btn.html('上传并抽取');
+      btn.prop('disabled', false);
+      fileInput.disabled = false;
+      $('#progressWrapper').hide();
+      $('#progressBar').css('width', '0%');
+      document.getElementById('fileInput').value = '';
+      document.getElementById('fileName').textContent = '';
+    }
   });
+});
+
+  function fetchExtractionResults() {
+  $.get('/get_extraction_result', function (res) {
+    if (res.data && res.data.length > 0) {
+      $('#extractionResultsContainer').show();
+      const tbody = $('#extractionResultsBody');
+      tbody.empty();
+
+      res.data.forEach(row => {
+        tbody.append(`
+          <tr>
+            <td>${row.source || ''}</td>
+            <td>${row.target || ''}</td>
+            <td>${row.rel_type || ''}</td>
+            <td>${row.source_text || ''}</td>
+          </tr>
+        `);
+      });
+    } else {
+      console.log('⚠️ 暂无抽取结果');
+    }
+  });
+}
+
 </script>
 {% endblock %}

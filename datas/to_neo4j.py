@@ -5,7 +5,7 @@ import pandas as pd
 
 g = Graph("bolt://localhost:7687", user="neo4j", password="123456")
 # g = Graph('http://localhost:7474', user='neo4j', password='123456')
-#从删库到跑路
+
 cypher = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r'
 g.run(cypher)
 

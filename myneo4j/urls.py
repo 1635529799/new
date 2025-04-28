@@ -13,7 +13,10 @@ urlpatterns = [
     url(r"^add/$", add, name="add"),
     # url(r"^wenda$", wenda_html, name="wenda_html"),
     url(r"^upload$", upload_html, name="upload_html"),
-    url(r"^progress$", views.get_progress, name="progress")
+    url(r"^progress$", views.get_progress, name="progress"),
+    url(r"^get_extraction_result$", views.get_extraction_result, name="get_extraction_result"),
+    url(r"^node_detail/$", views.node_detail, name="node_detail")
+
 
 
 ]

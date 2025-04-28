@@ -3,187 +3,159 @@
 
 {% block content %}
 <main class="lyear-layout-content">
-  <style>
-    .card-transparent {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 1rem;
-    }
 
-    .table th {
-      background-color: rgba(76, 175, 80, 0.15);
-      color: #e0f2f1;
-      font-weight: bold;
-    }
+<style>
+  .card-transparent {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 1.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  .table th {
+    background-color: rgba(76,175,80,0.15);
+    color: #e0f2f1;
+    font-weight: bold;
+  }
+  .table td {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .table-hover tbody tr:hover {
+    background-color: rgba(76,175,80,0.1);
+  }
+  .pagination .page-link {
+    background: rgba(76,175,80,0.15);
+    border: none;
+    color: #fff;
+    margin: 0 3px;
+    border-radius: 8px;
+  }
+  .pagination .active .page-link {
+    background: #43a047;
+    color: white;
+    font-weight: bold;
+  }
+  .pagination .page-link:hover {
+    background: #2e7d32;
+    color: white;
+  }
+</style>
 
-    .table td {
-      color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.03);
-    }
-
-    .table-hover tbody tr:hover {
-      background-color: rgba(76, 175, 80, 0.1);
-    }
-
-    .pagination .page-link {
-      background-color: rgba(76, 175, 80, 0.15);
-      border: none;
-      color: #ffffff;
-      margin: 0 3px;
-      border-radius: 8px;
-    }
-
-    .pagination .active .page-link {
-      background-color: #43a047;
-      color: white;
-      font-weight: bold;
-    }
-
-    .pagination .page-link:hover {
-      background-color: #2e7d32;
-      color: white;
-    }
-
-    .btn-deep-green {
-      background-color: #2e7d32 !important;
-      border: 1px solid #1b5e20 !important;
-      color: #ffffff !important;
-      font-weight: bold;
-      padding: 6px 20px;
-      border-radius: 10px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(30, 90, 40, 0.4);
-    }
-
-    .btn-deep-green:hover {
-      background-color: #1b5e20 !important;
-      box-shadow: 0 6px 14px rgba(30, 90, 40, 0.6);
-    }
-  </style>
-
-  <div class="container-fluid">
-    <form id="rec" method="get">
-      <div class="input-group mb-4">
-        <input type="text" id="key" value="{{ query }}" name="key" class="form-control" placeholder="输入要查询的节点名称或关系">
-        <span class="btn btn-deep-green input-group-addon" type="button" onclick="document.forms[0].action='/get_all';document.forms[0].submit();">查询</span>
-      </div>
-    </form>
-
-    <div class="mb-3">
-      <a href="/add/" class="btn btn-deep-green">添加节点</a>
+<div class="container-fluid">
+  <form id="filterForm" method="get" class="mb-4">
+    <div class="input-group">
+      <select id="graphSelector" name="graph" class="form-select" onchange="document.getElementById('filterForm').submit()">
+        <option value="">-- 全部图谱 --</option>
+        {% for graph in graphs %}
+          <option value="{{ graph }}" {% if graph == selected_graph %}selected{% endif %}>{{ graph }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="key" value="{{ query }}" class="form-control" placeholder="输入节点名称或关系">
+      <button class="btn btn-success" type="submit">查询</button>
     </div>
+  </form>
 
-    <div class="card-transparent">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>开始节点</th>
-            <th>开始节点类型</th>
-            <th>关系</th>
-            <th>结束节点</th>
-            <th>结束节点类型</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for record in nodes %}
-          <tr>
-            <td>{{ record.start_node }}</td>
-            <td>{{ record.start_node_type }}</td>
-            <td>{{ record.relationship }}</td>
-            <td>{{ record.end_node }}</td>
-            <td>{{ record.end_node_type }}</td>
-            <td>
-              <a href="/edit/?start_node={{record.start_node}}&start_node_type={{record.start_node_type}}&relationship={{record.relationship}}&end_node={{record.end_node}}&end_node_type={{record.end_node_type}}" class="btn btn-deep-green btn-sm">编辑</a>
-              <button type="button" class="btn btn-danger btn-sm delete-btn" data-start-node="{{ record.start_node }}" data-end-node="{{ record.end_node }}" data-relationship="{{ record.relationship }}">删除关系</button>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 分页 -->
-    <nav class="pagination mt-3">
-      <ul class="pagination">
-        {% if page > 1 %}
-        <li class="page-item"><a class="page-link" href="?page=1&page_size={{ page_size }}">&laquo;&laquo;</a></li>
-        <li class="page-item"><a class="page-link" href="?page={{ page|add:'-1' }}&page_size={{ page_size }}">上一页</a></li>
-        {% endif %}
-
-        <li class="page-item active"><span class="page-link">第 {{ page }} 页，共 {{ total_pages }} 页</span></li>
-
-        {% if page < total_pages %}
-        <li class="page-item"><a class="page-link" href="?page={{ page|add:'1' }}&page_size={{ page_size }}">下一页</a></li>
-        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&page_size={{ page_size }}">&raquo;&raquo;</a></li>
-        {% endif %}
-      </ul>
-    </nav>
+  <div class="mb-3">
+    <a href="/add/" class="btn btn-success">添加节点</a>
   </div>
 
-  <!-- 删除确认弹窗 -->
-  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">确认删除</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">确定要删除这条记录吗？</div>
-        <div class="modal-footer">
+  <div class="card-transparent">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>开始节点</th>
+          <th>开始节点类型</th>
+          <th>关系</th>
+          <th>结束节点</th>
+          <th>结束节点类型</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in nodes %}
+        <tr>
+          <td><a href="/node_detail/?name={{ record.start_node }}" class="text-success">{{ record.start_node }}</a></td>
+          <td>{{ record.start_node_type }}</td>
+          <td>{{ record.relationship }}</td>
+          <td>{{ record.end_node }}</td>
+          <td>{{ record.end_node_type }}</td>
+          <td>
+            <a href="/edit/?start_node={{ record.start_node }}&start_node_type={{ record.start_node_type }}&relationship={{ record.relationship }}&end_node={{ record.end_node }}&end_node_type={{ record.end_node_type }}" class="btn btn-success btn-sm">编辑</a>
+            <button type="button" class="btn btn-danger btn-sm delete-btn" data-start-node="{{ record.start_node }}" data-end-node="{{ record.end_node }}" data-relationship="{{ record.relationship }}">删除</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 分页 -->
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page=1&graph={{ selected_graph }}&key={{ query }}">首页</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ page|add:'-1' }}&graph={{ selected_graph }}&key={{ query }}">上一页</a></li>
+      {% endif %}
+      <li class="page-item active"><span class="page-link">第 {{ page }} 页 / 共 {{ total_pages }} 页</span></li>
+      {% if page < total_pages %}
+        <li class="page-item"><a class="page-link" href="?page={{ page|add:'1' }}&graph={{ selected_graph }}&key={{ query }}">下一页</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&graph={{ selected_graph }}&key={{ query }}">末页</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+<!-- 删除弹窗 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">确认删除</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">确定删除此关系？</div>
+      <div class="modal-footer">
+        <form id="deleteForm" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="start_node" id="start_node">
+          <input type="hidden" name="end_node" id="end_node">
+          <input type="hidden" name="relationship" id="relationship">
+          <button type="submit" class="btn btn-danger">确定删除</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-          <form id="deleteForm" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="start_node" id="start_node">
-            <input type="hidden" name="end_node" id="end_node">
-            <input type="hidden" name="relationship" id="relationship">
-            <button type="submit" class="btn btn-danger">确定删除</button>
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   </div>
-</main>
+</div>
 
-<script src="/static/jquery-1.10.2.min.js"></script>
 <script>
-  document.querySelectorAll('.delete-btn').forEach(button => {
-    button.addEventListener('click', function () {
-      const startNode = this.getAttribute('data-start-node');
-      const endNode = this.getAttribute('data-end-node');
-      const relationship = this.getAttribute('data-relationship');
-      document.getElementById('start_node').value = startNode;
-      document.getElementById('end_node').value = endNode;
-      document.getElementById('relationship').value = relationship;
-      $('#deleteModal').modal('show');
+  $('.delete-btn').click(function() {
+    $('#start_node').val($(this).data('start-node'));
+    $('#end_node').val($(this).data('end-node'));
+    $('#relationship').val($(this).data('relationship'));
+    $('#deleteModal').modal('show');
+  });
+
+  $('#deleteForm').submit(function(e) {
+    e.preventDefault();
+    $.post('/delete', $(this).serialize(), function(res) {
+      if (res.success) location.reload();
+      else alert('删除失败');
     });
   });
 
-  $('#deleteForm').on('submit', function (event) {
-    event.preventDefault();
-    const formData = $(this).serialize();
-    $.ajax({
-      type: 'POST',
-      url: '/delete',
-      data: formData,
-      success: function (response) {
-        if (response.success) {
-          location.reload();
-        } else {
-          alert('删除失败，请重试！');
-        }
-      },
-      error: function (xhr, status, error) {
-        console.error(error);
-        alert('发生错误，请检查控制台日志。');
-      }
-    });
+    document.getElementById('graphSelector').addEventListener('change', function() {
+    // 自动保留输入框里的关键词，提交
+    const keyInput = document.querySelector('input[name="key"]');
+    const form = document.getElementById('filterForm');
+    if (!keyInput.value) {
+      keyInput.value = '';
+    }
+    form.submit();
   });
 </script>
+
+</main>
 {% endblock %}
